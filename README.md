@@ -19,7 +19,6 @@ the score, the threshold and the stutter events that were found.
 - [Repository layout](#repository-layout)
 - [Installation](#installation)
 - [Running the application](#running-the-application)
-- [Sharing a public link](#sharing-a-public-link)
 - [Public and research views](#public-and-research-views)
 - [HTTP API](#http-api)
 - [Command-line tools](#command-line-tools)
@@ -148,19 +147,6 @@ Linux or macOS:
 
 Open http://127.0.0.1:8000 in Chrome, Edge or Firefox and allow the microphone. Waitress is a production web
 server. `python run.py serve` starts the same application on Flask's development server.
-
-## Sharing a public link
-
-Browsers allow the microphone only on `localhost` or over HTTPS. To let other people try the application, put it
-behind an HTTPS tunnel or a reverse proxy. With [ngrok](https://ngrok.com/docs/getting-started):
-
-```
-ngrok config add-authtoken YOUR_TOKEN
-ngrok http 8000
-```
-
-Run the second command while the server is running. ngrok prints an `https://` forwarding address that anyone
-can open. The link stays online only while both the server and ngrok are running.
 
 ## Public and research views
 
