@@ -1,0 +1,22 @@
+{
+ "name": "ensemble_v17_fulldata_noise",
+ "frame_type": "ensemble",
+ "frame_file": "frame_model.pt",
+ "verifier": "gbt",
+ "unit_gate": 0.1,
+ "verifier_features": "all",
+ "threshold": 0.91,
+ "soft_margin": 0.08,
+ "training": {
+  "train_clips": 32706,
+  "noise": [
+   "MS-SNSD noise_train (MIT)",
+   "MUSAN noise/music/speech (train half)"
+  ],
+  "frontend": "none (noise suppression tested and rejected)"
+ },
+ "real_people": {
+  "clips": 69,
+  "speakers": 23
+ }
+}

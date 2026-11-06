@@ -1,0 +1,34 @@
+{
+  "source": "C:\\Users\\pooja\\Downloads\\wakeWordData",
+  "clips_used": {
+    "NoStutteredWords": 2123,
+    "Block": 359,
+    "Prolongation": 287,
+    "SoundRep": 282,
+    "WordRep": 336
+  },
+  "repetition_gap_ms": {
+    "median": 140.0,
+    "p10": 50.0,
+    "p90": 740.0
+  },
+  "fluent_gap_ms": {
+    "median": 140.0,
+    "p90": 810.0
+  },
+  "block_gap_ms": {
+    "p10": 50.0,
+    "median": 160.0,
+    "p90": 800.0
+  },
+  "prolongation_run_ms": {
+    "p10": 530.0,
+    "median": 1040.0,
+    "p90": 1930.0
+  },
+  "fluent_run_ms": {
+    "median": 1020.0,
+    "p90": 1940.0
+  },
+  "note": "clip-level labels: gaps/runs are measured with an energy VAD, so they are indicative priors, not ground truth."
+}

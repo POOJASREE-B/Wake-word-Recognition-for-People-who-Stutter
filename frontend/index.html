@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wake word for people who stutter</title>
+<meta name="description" content="A wake word detector that accepts Hey Google when it is said with repetitions, prolongations and blocks, and rejects other speech.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231F4FD1'/%3E%3Cpath d='M6 17h3m3-6v10m4-14v18m4-12v6m4-3h3' stroke='white' stroke-width='2.4' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/prefs.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <a class="wordmark" href="/">Wake word</a>
+  <nav aria-label="Sections">
+    <button class="navbtn active" data-tab="live" type="button">Listen</button>
+    <button class="navbtn research" data-tab="data" type="button" hidden>Data</button>
+    <button class="navbtn" data-tab="report" type="button">Results</button>
+    <button class="navbtn research" data-tab="check" type="button" hidden>Check</button>
+    <button class="navbtn research" data-tab="lab" type="button" hidden>Voice lab</button>
+  </nav>
+  <div class="topright">
+    <span class="conn" id="conn" role="status"><span class="sq" id="connSq"></span><span id="connText">Connecting</span></span>
+    <button id="prefsBtn" class="navbtn setbtn" type="button">Settings</button>
+  </div>
+</header>
+
+<main id="main" class="content">
+
+<!-- LISTEN -->
+<section id="tab-live" class="panel active">
+  <h1 class="vh">Listen</h1>
+  <div class="hero">
+    <div class="state">
+      <span id="micWell" class="mic" data-state="idle" aria-hidden="true"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></span>
+      <p id="micLabel" class="status" aria-live="polite">Press Start, then say Hey Google.</p>
+    </div>
+    <p id="micDetail" class="micDetail"></p>
+    <div class="row">
+      <button id="btnStart" class="btn primary" type="button">Start</button>
+      <button id="btnStop" class="btn" type="button" disabled>Stop</button>
+      <button id="btnRecord" class="btn ghost" type="button">Record a clip</button>
+      <label class="btn ghost filebtn">Upload audio<input id="fileIn" type="file" accept="audio/*"></label>
+    </div>
+    <canvas id="stripCanvas" class="strip" width="680" height="56" aria-label="Live input level"></canvas>
+    <p class="hint">You are never cut off: it decides only after you stop. Repetitions, long sounds and silent blocks are fine. Your browser will ask once for permission to use the microphone.</p>
+  </div>
+
+  <section>
+    <h2>What it is doing</h2>
+    <dl class="kv" aria-live="off">
+      <div><dt>Step</dt><dd id="dStatus">Idle</dd></div>
+      <div><dt>Sounds heard</dt><dd id="heardText">-</dd></div>
+      <div><dt>Understood as</dt><dd id="fluentText" class="strong">-</dd></div>
+      <div><dt>Match score</dt><dd id="scoreText">-</dd></div>
+      <div><dt>Threshold</dt><dd id="thrText">-</dd></div>
+      <div><dt>Pause after speech</dt><dd id="tailText">-</dd></div>
+      <div><dt>Disfluency</dt><dd id="eventsBox" class="tags">-</dd></div>
+    </dl>
+    <div class="gauge" aria-hidden="true"><div id="gaugeFill"></div><div id="gaugeThr"></div></div>
+    <div class="row">
+      <button id="playOrig" class="btn" type="button" disabled>Play what I said</button>
+      <button id="playFluent" class="btn" type="button" disabled>Play fluent version</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it heard</h2>
+    <p class="hint">Every new thing it hears is kept here, newest first.</p>
+    <ol id="heardLog" class="heardLog" aria-live="off"></ol>
+    <p id="heardEmpty" class="empty">Nothing heard yet.</p>
+    <div class="row"><button id="btnClearHeard" class="btn ghost" type="button">Clear log</button></div>
+  </section>
+
+  <section>
+    <h2>Recent attempts</h2>
+    <div class="tableWrap">
+      <table id="attTable"><thead><tr><th>Time</th><th>Result</th><th class="num">Confidence</th><th>Type</th></tr></thead><tbody></tbody></table>
+    </div>
+    <p id="attEmpty" class="empty">No attempts yet.</p>
+  </section>
+
+  <details class="fold">
+    <summary>Last analysis</summary>
+    <canvas id="liveCanvas" width="1100" height="260" aria-label="Waveform, model probabilities and decoded path for the last analysed audio"></canvas>
+    <div class="legend" id="legend"></div>
+  </details>
+</section>
+
+<!-- DATA -->
+<section id="tab-data" class="panel">
+  <h1>Data</h1>
+  <p class="lede" id="dsCount">Fluent and disfluent wake word clips, and the negatives that must be rejected.</p>
+
+  <div class="filters">
+    <label>Split
+      <select id="fSplit"><option value="">All</option><option>train</option><option>val</option><option>test</option></select></label>
+    <label>Class
+      <select id="fLabel"><option value="">All</option><option value="fluent">Wake word, fluent</option><option value="disfluent">Wake word, disfluent</option><option value="negative">Negative</option></select></label>
+    <label>Category
+      <select id="fCat"><option value="">All</option></select></label>
+    <label class="grow">File name
+      <input id="fQ" type="search" placeholder="DIS_00001"></label>
+    <button id="fGo" class="btn primary" type="button">Apply</button>
+  </div>
+  <div id="dsSummary" class="tags"></div>
+
+  <div class="grid2 data">
+    <div>
+      <div class="tableWrap tall">
+        <table id="dsTable"><thead><tr><th>File</th><th>Class</th><th>Kind</th><th>Category</th><th class="num">Sec</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="row pager"><button id="pgPrev" class="btn" type="button">Previous</button><span id="pgInfo"></span><button id="pgNext" class="btn" type="button">Next</button></div>
+    </div>
+
+    <div id="detailCard">
+      <div class="detailHead">
+        <h2 id="detailTitle">Clip</h2>
+        <details class="help"><summary>Keys</summary>
+          <div class="pop"><b>Up / Down</b> previous or next clip<br><b>Space</b> play or pause<br><b>F</b> play the fluent source<br><b>S</b> toggle half speed</div>
+        </details>
+      </div>
+      <p id="detailEmpty" class="empty">Pick a clip from the list.</p>
+      <div id="detailBody" hidden>
+        <canvas id="alignCanvas" width="640" height="300" aria-label="Fluent source and disfluent version on one shared time axis"></canvas>
+        <div class="legend"><span><i class="sw fluent"></i>Fluent source</span><span><i class="sw dis"></i>Disfluent version</span><span><i class="sw shade"></i>Repeated or stretched part</span></div>
+        <div class="row">
+          <button id="dPlay" class="btn" type="button">Play disfluent</button>
+          <button id="dPlayPair" class="btn" type="button">Play fluent source</button>
+          <label class="check"><input id="dSlow" type="checkbox"> Half speed</label>
+          <button id="specBtn" class="btn ghost" type="button">Show spectrogram</button>
+        </div>
+        <canvas id="specCanvas" width="640" height="200" hidden aria-label="Spectrogram of the disfluent clip"></canvas>
+        <h3>Details</h3>
+        <dl id="detailMeta" class="kv"></dl>
+        <div id="detailEvents" class="tags"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="tab-report" class="panel">
+  <h1>Results</h1>
+  <p class="lede">How the trained model does on data it was not trained on, from its saved report.</p>
+  <div id="reportBox"><div class="skel w60"></div><div class="skel w80"></div><div class="skel w40"></div></div>
+</section>
+
+<!-- CHECK -->
+<section id="tab-check" class="panel">
+  <h1>Check</h1>
+  <p class="lede">The model that is loaded now, scored on the real recordings of people who stutter, next to its held-out results and false wake-up rate.</p>
+  <div class="row"><button id="checkRun" class="btn primary" type="button">Run again</button><span id="checkMsg" class="hint" aria-live="polite"></span></div>
+  <div id="checkBox"></div>
+</section>
+
+<!-- VOICE LAB -->
+<section id="tab-lab" class="panel">
+  <h1>Voice lab</h1>
+  <p class="lede">Make disfluent versions of your own voice from one fluent recording.</p>
+  <p class="hint">Record or upload one clear "Hey Google". It is cut into Hey, Goo and gle, then repetitions, prolongations and blocks are rebuilt from your own audio, so the result keeps your voice. Use only your own voice, or a voice you have permission to use.</p>
+  <div class="row">
+    <button id="labRec" class="btn primary" type="button">Record</button>
+    <label class="btn filebtn">Upload audio<input id="labFile" type="file" accept="audio/*"></label>
+    <label class="inline">Clips per type
+      <select id="labN"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+    <button id="labGo" class="btn" type="button" disabled>Generate</button>
+  </div>
+  <div id="labMsg" class="hint" aria-live="polite"></div>
+  <div id="labOut" class="labGrid"></div>
+</section>
+
+</main>
+
+<footer>Hey Google wake-word detection for people who stutter. Recorded audio is analysed and not saved.</footer>
+
+<dialog id="prefs" aria-labelledby="prefsTitle">
+  <div class="dlgHead"><h2 id="prefsTitle">Settings</h2><form method="dialog"><button class="btn ghost" aria-label="Close settings">Close</button></form></div>
+  <p class="hint first">Saved in this browser. Changes apply straight away.</p>
+
+  <fieldset><legend>Theme</legend>
+    <label class="opt"><input type="radio" name="theme" value="system"> Match my device</label>
+    <label class="opt"><input type="radio" name="theme" value="light"> Light</label>
+    <label class="opt"><input type="radio" name="theme" value="dark"> Dark</label>
+  </fieldset>
+  <fieldset><legend>Text size</legend>
+    <label class="opt"><input type="radio" name="size" value="normal"> Standard</label>
+    <label class="opt"><input type="radio" name="size" value="large"> Large</label>
+  </fieldset>
+  <fieldset><legend>Sensitivity</legend>
+    <label class="opt"><input type="radio" name="sens" value="0.05"> Fewer false wake-ups</label>
+    <label class="opt"><input type="radio" name="sens" value="0"> Balanced</label>
+    <label class="opt"><input type="radio" name="sens" value="-0.05"> Fewer missed wake words</label>
+    <p id="prefsThr" class="hint"></p>
+  </fieldset>
+  <fieldset><legend>Pause before it decides</legend>
+    <label class="opt"><input type="radio" name="tail" value="0.3"> Short, 0.3 s</label>
+    <label class="opt"><input type="radio" name="tail" value="0.6"> Medium, 0.6 s</label>
+    <label class="opt"><input type="radio" name="tail" value="1"> Long, 1 s</label>
+  </fieldset>
+  <fieldset><legend>Sound</legend>
+    <label class="opt"><input type="checkbox" name="voice"> Say "Wake word detected" aloud</label>
+    <label class="opt"><input type="checkbox" name="beep"> Play a short beep</label>
+  </fieldset>
+  <fieldset><legend>Data clips</legend>
+    <label class="opt"><input type="checkbox" name="slow"> Play at half speed by default</label>
+  </fieldset>
+  <div class="row"><button id="prefsReset" class="btn" type="button">Reset to defaults</button></div>
+</dialog>
+
+<script src="/static/app.js"></script>
+<script src="/static/check.js"></script>
+</body>
+</html>
