@@ -21,7 +21,7 @@ def cmd_check(a):
     print(f"Python {sys.version.split()[0]}  ({sys.executable})")
     ok = sys.version_info >= (3, 9)
     print("  python >= 3.9 ........", "OK" if ok else "TOO OLD")
-    for mod, need in (("numpy", True), ("scipy", True), ("sklearn", True), ("flask", True), ("matplotlib", False), ("torch", False)):
+    for mod, need in (("numpy", True), ("scipy", True), ("sklearn", True), ("flask", True), ("onnxruntime", True), ("matplotlib", False), ("torch", False)):
         try:
             m = importlib.import_module(mod)
             try:
@@ -31,7 +31,7 @@ def cmd_check(a):
                 ver = ""
             print(f"  {mod:11s} .......... OK {ver}")
         except Exception:
-            print(f"  {mod:11s} .......... {'MISSING (required)' if need else 'not installed (optional)'}")
+            print(f"  {mod:11s} .......... {'MISSING (required)' if need else 'not installed (optional; needed only for training)'}")
             ok = ok and not need
     from wakeword.audio_io import ffmpeg_available
     print("  ffmpeg ............", "OK" if ffmpeg_available() else "not found (needed only to decode mp3/ogg/aac/opus uploads)")
@@ -46,6 +46,8 @@ def cmd_check(a):
             from wakeword.detector import WakeWordDetector
             det = WakeWordDetector.load(mdir)
             print(f"  trained model ...... OK, loads ({(det.meta or {}).get('name', '?')}, threshold {det.threshold:.3f})")
+            backend = "ONNX Runtime" if type(det.model).__name__.startswith("Onnx") else "PyTorch"
+            print(f"  model backend ...... {backend}" + ("" if backend == "ONNX Runtime" else "  (run scripts/export_onnx.py to run without PyTorch)"))
         except Exception as e:
             print(f"  trained model ...... FOUND BUT NOT LOADABLE: {type(e).__name__}: {e}")
             ok = False

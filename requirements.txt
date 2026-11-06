@@ -1,8 +1,7 @@
+# Running the app (detector, web server). PyTorch is not needed: the frame models run on ONNX Runtime.
 numpy>=1.23
 scipy>=1.9
 scikit-learn>=1.2
 flask>=2.2
 onnxruntime>=1.16
-torch>=2.0
 waitress>=3.0
-matplotlib>=3.6

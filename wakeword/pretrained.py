@@ -58,8 +58,8 @@ def embed(x: np.ndarray, stride: int = 4) -> np.ndarray:
     w = np.stack([m[s:s + WIN_MEL] for s in starts])[..., None]
     out = []
     s = _sess("embedding_model")
-    for i in range(0, len(w), 256):
-        out.append(np.squeeze(s.run(None, {"input_1": w[i:i + 256]}), axis=(1, 2)) if False else s.run(None, {"input_1": w[i:i + 256]})[0].reshape(-1, EMB))
+    for i in range(0, len(w), 32):        # batches of 32 windows: same output as larger batches, about 400 MB less memory
+        out.append(s.run(None, {"input_1": w[i:i + 32]})[0].reshape(-1, EMB))
     return np.concatenate(out).astype(np.float32)
 
 

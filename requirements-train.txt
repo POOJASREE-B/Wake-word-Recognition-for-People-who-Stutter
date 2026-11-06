@@ -1,0 +1,6 @@
+# Training, retraining and exporting the models (python run.py all, scripts/export_onnx.py).
+# For the CPU-only PyTorch build on Windows or x86 Linux: pip install torch --index-url https://download.pytorch.org/whl/cpu
+-r requirements.txt
+torch>=2.0
+onnx>=1.15
+matplotlib>=3.6
