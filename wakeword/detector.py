@@ -100,12 +100,6 @@ def load_frame_model(path, kind: str):
         from .torch_models import TorchFrameModel
         return TorchFrameModel.load(path)
     if kind == "ensemble":
-        # The ONNX export (scripts/export_onnx.py) gives the same posteriors without PyTorch; set WW_BACKEND=torch to
-        # use the PyTorch checkpoints instead (for example right after retraining, before exporting again).
-        import os
-        from . import onnx_models
-        if os.environ.get("WW_BACKEND", "").strip() != "torch" and onnx_models.available(Path(path).parent):
-            return onnx_models.OnnxEnsembleModel.load(Path(path).parent)
         from .embtrain import EnsembleFrameModel
         return EnsembleFrameModel.load(path)
     if kind == "emb":
